@@ -19,8 +19,6 @@ Lệnh này sẽ khởi chạy container PostgreSQL chạy ngầm dựa trên c�
 
 **ERD Diagram**
 
-![ERD Diagram](./assets/erd-v1.png)
-
 ```mermaid
 erDiagram
     users {
