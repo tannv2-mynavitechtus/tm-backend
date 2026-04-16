@@ -31,6 +31,18 @@
 $ yarn install
 ```
 
+## Database (Docker)
+
+The project requires a PostgreSQL database. You can start the pre-configured database using Docker:
+
+```bash
+# Start the database container
+$ docker compose up -d
+
+# Access the database terminal (psql)
+$ docker exec -it tm_postgres psql -U postgres -d task_management
+```
+
 ## Compile and run the project
 
 ```bash
