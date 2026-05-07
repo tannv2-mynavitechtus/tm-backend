@@ -5,7 +5,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Brackets, Repository } from 'typeorm';
 import { Task, TaskStatus } from './entities/task.entity';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
@@ -20,6 +20,7 @@ export class TasksService {
 
   async findAll(
     query: any = {},
+    user: any,
   ): Promise<{ data: Task[]; total: number; page: number; lastPage: number }> {
     const { status, search, page = 1, limit = 10 } = query;
     const queryBuilder = this.taskRepository
@@ -27,6 +28,17 @@ export class TasksService {
       .leftJoinAndSelect('task.assignee', 'assignee')
       .leftJoinAndSelect('task.reporter', 'reporter')
       .orderBy('task.createdAt', 'DESC');
+
+    if (user.role !== UserRole.ADMIN) {
+      queryBuilder.andWhere(
+        new Brackets((qb) => {
+          qb.where('reporter.id = :userId', { userId: user.id }).orWhere(
+            'assignee.id = :userId',
+            { userId: user.id },
+          );
+        }),
+      );
+    }
 
     if (status) {
       queryBuilder.andWhere('task.status = :status', { status });
@@ -52,7 +64,7 @@ export class TasksService {
     };
   }
 
-  async findOne(id: number): Promise<Task> {
+  async findOne(id: number, user?: any): Promise<Task> {
     const task = await this.taskRepository.findOne({
       where: { id },
       relations: ['assignee', 'reporter'],
@@ -60,6 +72,11 @@ export class TasksService {
     if (!task) {
       throw new NotFoundException(`Task with ID ${id} not found`);
     }
+
+    if (user) {
+      this.assertTaskReadableByUser(task, user);
+    }
+
     return task;
   }
 
@@ -134,6 +151,18 @@ export class TasksService {
     const result = await this.taskRepository.delete(id);
     if (result.affected === 0) {
       throw new NotFoundException(`Task with ID ${id} not found`);
+    }
+  }
+
+  private assertTaskReadableByUser(task: Task, user: any): void {
+    const isOwner = task.reporter?.id === user.id;
+    const isAssignee = task.assignee?.id === user.id;
+    const isAdmin = user.role === UserRole.ADMIN;
+
+    if (!isOwner && !isAssignee && !isAdmin) {
+      throw new ForbiddenException(
+        'You do not have permission to view this task',
+      );
     }
   }
 }

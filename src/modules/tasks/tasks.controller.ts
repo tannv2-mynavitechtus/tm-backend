@@ -24,13 +24,13 @@ export class TasksController {
   constructor(private readonly tasksService: TasksService) {}
 
   @Get()
-  findAll(@Query() query: any) {
-    return this.tasksService.findAll(query);
+  findAll(@Query() query: any, @CurrentUser() user: any) {
+    return this.tasksService.findAll(query, user);
   }
 
   @Get(':id')
-  async findOne(@Param('id', ParseIntPipe) id: number) {
-    return this.tasksService.findOne(id);
+  async findOne(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: any) {
+    return this.tasksService.findOne(id, user);
   }
 
   @Post()
