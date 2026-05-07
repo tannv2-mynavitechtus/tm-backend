@@ -14,8 +14,17 @@ async function bootstrap() {
     defaultVersion: '1',
   });
 
-  // Enable CORS
-  app.enableCors();
+  const corsOrigin = process.env.CORS_ORIGIN;
+  const corsCredentials = process.env.CORS_CREDENTIALS === 'true';
+
+  app.enableCors(
+    corsOrigin
+      ? {
+          origin: corsOrigin.split(',').map((origin) => origin.trim()),
+          credentials: corsCredentials,
+        }
+      : undefined,
+  );
 
   app.useGlobalPipes(
     new ValidationPipe({
